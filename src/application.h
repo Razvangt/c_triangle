@@ -1,24 +1,10 @@
-#pragma once
-
-void init(State *state) {
-    errorHandlingSetup();
-    infoLog();
-
-    glfwInit();
-
-    contextCreate(state);
-    windowCreate(state);
-    rendererCreate(state);
-}
-
-void loop(State *state) {
-    while(!windowShouldClose(state)) {
-        windowPollEvents(state);
-    }
-}
-
-void cleanup(State *state) {
-    rendererDestroy(state);
-    windowDestroy(state);
-    contextDestroy(state);
-}
+#ifndef APPLICATION_HEADERS_INCLUDED
+#define APPLICATION_HEADERS_INCLUDED
+#include "context/context.h"
+#include "headers.h"
+#include "render/renderer.h"
+#include "window/window.h"
+void init(State *state);
+void loop(State *state);
+void cleanup(State *state);
+#endif // !APPLICATION_HEADERS_INCLUDED

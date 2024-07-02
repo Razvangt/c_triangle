@@ -1,52 +1,53 @@
-#pragma once
+#ifndef HEADERS_INCLUDED
+#define HEADERS_INCLUDED
 
-#include <stdio.h>
 #include <signal.h>
-#include <stdlib.h>
 #include <stdbool.h>
-
-#include <vulkan/vulkan.h>
+#include <stdio.h>
+#include <stdlib.h>
+#define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
+#include <vulkan/vulkan.h>
 
 typedef struct {
-    const char *applicationName;
-    const char *engineName;
-    const char *windowTitle;
+  const char *applicationName;
+  const char *engineName;
+  const char *windowTitle;
 
-    int windowWidth, windowHeight;
-    bool windowFullscreen;
+  int windowWidth, windowHeight;
+  bool windowFullscreen;
 
-    uint32_t apiVersion;
-    VkAllocationCallbacks *allocator;
-    VkComponentMapping swapchainComponentsMapping;
-    uint32_t swapchainBuffering;
+  uint32_t apiVersion;
+  VkAllocationCallbacks *allocator;
+  VkComponentMapping swapchainComponentsMapping;
+  uint32_t swapchainBuffering;
 } Config;
 
 typedef struct {
-    uint32_t queueFamily;
+  uint32_t queueFamily;
 
-    VkInstance instance;
-    VkPhysicalDevice physicalDevice;
-    VkDevice device;
-    VkQueue queue;
+  VkInstance instance;
+  VkPhysicalDevice physicalDevice;
+  VkDevice device;
+  VkQueue queue;
 } Context;
 
 typedef struct {
-    VkSwapchainKHR handle;
+  VkSwapchainKHR handle;
 
-    uint32_t imageCount;
-    VkImage *images;
-    VkImageView *imageViews;
+  uint32_t imageCount;
+  VkImage *images;
+  VkImageView *imageViews;
 
-    VkFormat format;
-    VkColorSpaceKHR colorSpace;
-    VkExtent2D imageExtent;
+  VkFormat format;
+  VkColorSpaceKHR colorSpace;
+  VkExtent2D imageExtent;
 } Swapchain;
 
 typedef struct {
-    GLFWwindow *handle;
-    VkSurfaceKHR surface;
-    Swapchain swapchain;
+  GLFWwindow *handle;
+  VkSurfaceKHR surface;
+  Swapchain swapchain;
 } Window;
 
 typedef struct {
@@ -54,13 +55,14 @@ typedef struct {
 } Renderer;
 
 typedef struct {
-    Config config;
-    Window window;
-    Context context;
-    Renderer renderer;
+  Config config;
+  Window window;
+  Context context;
+  Renderer renderer;
 } State;
 
 enum SwapchainBuffering {
-    SWAPCHAIN_DOUBLE_BUFFERING = 2,
-    SWAPCHAIN_TRIPLE_BUFFERING = 3,
+  SWAPCHAIN_DOUBLE_BUFFERING = 2,
+  SWAPCHAIN_TRIPLE_BUFFERING = 3,
 };
+#endif // !HEADERS_INCLUDED
