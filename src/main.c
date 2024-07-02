@@ -1,3 +1,4 @@
+#include <cstdint>
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 #include <signal.h>
@@ -33,6 +34,9 @@ typedef struct {
   bool window_fullscreen;
 
   // GLFW
+  int frameBufferWidth;
+  int frameBufferHeight;
+
   GLFWmonitor *window_monitor;
   GLFWwindow *window;
 
@@ -40,6 +44,8 @@ typedef struct {
   uint32_t api_version;
   uint32_t queueFamily;
   uint32_t swapchainImagesCount;
+  bool recreateSwapchain;
+
   VkAllocationCallbacks *allocator;
   VkInstance instance;
   VkPhysicalDevice physicalDevice;
@@ -55,6 +61,14 @@ void setUpErrorHandling() {
   glfwSetErrorCallback(glfwErrorCallback);
   atexit(exitCallback);
 }
+
+void glfwframebufferSizeCallback(GLFWwindow *window, int width, int height) {
+  State *state = glfwGetWindowUserPointer(window);
+  state->recreateSwapchain = true;
+  state->frameBufferHeight = height;
+  state->frameBufferWidth = width;
+  printf("RESIZED %i %i \n", height, width);
+}
 void createWindow(State *state) {
   glfwInit();
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -68,6 +82,12 @@ void createWindow(State *state) {
   state->window =
       glfwCreateWindow(state->window_width, state->window_height,
                        state->window_title, state->window_monitor, NULL);
+
+  glfwSetWindowUserPointer(state->window, state);
+  glfwSetFramebufferSizeCallback(state->window, glfwframebufferSizeCallback);
+  int width, height;
+  glfwGetFramebufferSize(state->window, &width, &height);
+  glfwframebufferSizeCallback(state->window, width, height);
 }
 void createInstance(State *state) {
   uint32_t requiredExtensionsCount;
@@ -279,13 +299,21 @@ void createSwapChain(State *state) {
             },
             state->allocator, &swapchain),
         "Couldnt get swapchain");
+
+  if (state->swapchainImagesViews) {
+    for (int i = 0; i < state->swapchainImagesCount; ++i) {
+      vkDestroyImageView(state->device, state->swapchainImagesViews[i],
+                         state->allocator);
+    }
+    free(state->swapchainImagesViews);
+    free(state->swapchainImages);
+  }
   vkDestroySwapchainKHR(state->device, state->swapchain, state->allocator);
   state->swapchain = swapchain;
 
   PANIC(vkGetSwapchainImagesKHR(state->device, swapchain,
                                 &state->swapchainImagesCount, NULL),
         "Couldnt get Images Count");
-  printf("Images Count: %i\n", state->swapchainImagesCount);
   state->swapchainImages =
       malloc(state->swapchainImagesCount * sizeof(VkImage));
   PANIC(!state->swapchainImages, "Couldnt allocate memory on  swapchainImages");
@@ -298,18 +326,21 @@ void createSwapChain(State *state) {
   PANIC(!state->swapchainImagesViews,
         "Couldnt allocate memory on  swapchainImagesViews");
   for (int i = 0; i < state->swapchainImagesCount; ++i) {
-    vkCreateImageView(state->device,
-                      &(VkImageViewCreateInfo){
-                          .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-                          .format = format.format,
-                          .image = state->swapchainImages[i],
-                          .components = (VkComponentMapping){},
-                          .subresourceRange =
-                              (VkImageSubresourceRange){
-                                  .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-                              },
-                      },
-                      state->allocator, &state->swapchainImagesViews[i]);
+    PANIC(
+        vkCreateImageView(state->device,
+                          &(VkImageViewCreateInfo){
+                              .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+                              .format = format.format,
+                              .image = state->swapchainImages[i],
+                              .components = (VkComponentMapping){},
+                              .subresourceRange =
+                                  (VkImageSubresourceRange){
+                                      .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                                  },
+                              .viewType = VK_IMAGE_VIEW_TYPE_2D,
+                          },
+                          state->allocator, &state->swapchainImagesViews[i]),
+        "couldnt create image view %i", i);
   }
 }
 void init(State *state) {
@@ -325,16 +356,37 @@ void init(State *state) {
   createDevice(state);
 
   getQueue(state);
-
-  createSwapChain(state);
 }
 void loop(State *state) {
   while (!glfwWindowShouldClose(state->window)) {
     glfwPollEvents(); // for games  every frame is redrawn
     // glwgWaitEvents for gui no need to redraw unless there is an event
+    if (state->recreateSwapchain) {
+      state->recreateSwapchain = false;
+      printf("Recreated Swapchain \n");
+      createSwapChain(state);
+    }
+
+    uint32_t imageIndex;
+    vkAcquireNextImageKHR(state->device, state->swapchain, UINT64_MAX, NULL,
+                          NULL, &imageIndex);
+    VkResult result = vkQueuePresentKHR(
+        state->queue, &(VkPresentInfoKHR){
+                          .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+                          .pImageIndices = &(uint32_t){imageIndex},
+                          .swapchainCount = 1,
+                          .pSwapchains = &state->swapchain,
+                      });
+    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
+      state->recreateSwapchain = true;
+    }
   }
 }
 void cleanup(State *state) {
+  for (int i = 0; i < state->swapchainImagesCount; ++i) {
+    vkDestroyImageView(state->device, state->swapchainImagesViews[i],
+                       state->allocator);
+  }
   vkDestroySwapchainKHR(state->device, state->swapchain, state->allocator);
   vkDestroyDevice(state->device, state->allocator);
   vkDestroySurfaceKHR(state->instance, state->surface, state->allocator);
