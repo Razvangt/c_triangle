@@ -16,3 +16,11 @@ void cleanWindow(struct EngineState* state) {
 bool shouldWindowClose(struct EngineState* state) {
     return glfwWindowShouldClose(state->context.window.handle);
 }
+
+ErrorCode createWindowSurface(struct Window window,VkInstance instance, VkSurfaceKHR * surface){
+  if (glfwCreateWindowSurface(instance,window.handle, NULL, surface) != VK_SUCCESS) {
+    printf("failed to create Window Surface\n");
+    return ERROR_VULKAN;
+  }
+  return SUCCESS;
+};

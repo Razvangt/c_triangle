@@ -8,9 +8,8 @@
 // Math
 #include "cglm/cglm.h"
 
-// GLIB
+// C_COLLECTION
 
-#include <glib.h>
 
 // Standard
 #include "string.h"

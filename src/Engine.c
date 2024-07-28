@@ -1,5 +1,6 @@
 #include "Engine.h"
 #include "errors.h"
+#include "tools.h"
 
 
 ErrorCode init(struct EngineState* state) {
@@ -12,11 +13,14 @@ ErrorCode init(struct EngineState* state) {
 #endif
     state->context.physicalDevice = VK_NULL_HANDLE;
 
-    state->context.validationLayers = g_ptr_array_new();
-    g_ptr_array_add(&state->context.validationLayers, "VK_LAYER_KHRONOS_validation");
-    state->context.deviceExtensions[0] = "VK_KHR_SWAPCHAIN_EXTENSION_NAME";
-    state->context                     = context;
+    // Not Bad there might be some suggar Syntax for this  A macro for sure 
+    struct StringArray valLayers =   create_string_array( (const char* []) {"VK_LAYER_KHRONOS_validation",NULL},1);
+    struct StringArray deviceExtensions =   create_string_array( (const char* []) {"VK_KHR_SWAPCHAIN_EXTENSION_NAME",NULL},1);
 
+    state->context.validationLayers =  &valLayers;
+    state->context.deviceExtensions = &deviceExtensions;
+    state->context                     = context;
+    
     SOR(initContext(state));
     initWindow(state);
     init_pipeline();

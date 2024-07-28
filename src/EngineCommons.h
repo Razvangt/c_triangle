@@ -19,9 +19,8 @@ struct QueueFamilyIndices {
     uint32_t presentFamily;
     bool graphicsFamilyHasValue;
     bool presentFamilyHasValue;
-    bool isComplete;
 };
-
+ 
 
 struct Config {
     const char* applicationName;
@@ -41,9 +40,10 @@ struct Config {
 // n of elements
 struct Context {
     bool shouldClose;
-    // Do i need it to be constant ????? will it grow at some point
-    GPtrArray* validationLayers;
-    const char* deviceExtensions[1];
+    
+    // they might grow so not constant if at some point i refactor and find a better way i might change it
+    struct StringArray* validationLayers;
+    struct StringArray* deviceExtensions;
     bool enableValidationLayers;
 
     struct Window window;
@@ -52,6 +52,7 @@ struct Context {
     VkSurfaceKHR surface_;
     VkQueue graphicsQueue_;
     VkQueue presentQueue_;
+    
     VkInstance instance;
     VkDebugUtilsMessengerEXT debugMessenger;
     VkPhysicalDevice physicalDevice;

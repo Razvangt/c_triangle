@@ -9,7 +9,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 find_package(Vulkan REQUIRED) # throws error if could not find Vulkan
 message(STATUS "Found Vulkan: $ENV{VULKAN_SDK}")
 
-find_package(glib-2.0 REQUIRED HINTS ${GLIB_DIR})
+
 #################################################################################################
 ###      LINKING PART
 #################################################################################################
@@ -23,7 +23,7 @@ add_executable(c_triangle main.c ${SOURCES})
 target_include_directories(c_triangle PUBLIC ${Vulkan_INCLUDE_DIRS} 
 	${GLFW_INCLUDE_DIRS} 
 	${CGLM_INCLUDE_DIR}
-	${GLIB_DIR}
+	${COLLECTION_INCLUDE_DIR}
 	${PROJECT_SOURCE_DIR}/src
 )
 
@@ -31,7 +31,8 @@ target_link_directories(c_triangle PUBLIC
 	${VULKAN_LIBRARIES} 
 	${GLFW_LIBRARIES} 
 	${CGLM_LIB}
-	${GLIB_LIB}
-) 
-target_link_libraries(c_triangle PUBLIC glib-2.0.lib cglm glfw3 ${Vulkan_LIBRARIES})
+)
+
+
+target_link_libraries(c_triangle PUBLIC  cglm glfw3 ${Vulkan_LIBRARIES}   ${COLLECTION_LIB})
 
